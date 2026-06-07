@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ParaBot — Cape Paralegal Services</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:   #0d1117; --navy2: #131922; --navy3: #1a2332; --panel: #1e2a3a;
+      --border: #2a3a4f; --gold: #c9a84c; --gold2: #e8c87a; --cream: #f0ead8;
+      --muted:  #7a8fa6; --green: #2dbc7e; --amber: #e0a030; --red: #d94f4f;
+      --blue:   #4a9edd; --text: #d8e4f0; --radius: 6px;
+    }
+    html, body { height: 100%; background: var(--navy); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 14px; line-height: 1.6; }
+
+    /* LOGIN */
+    #login-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--navy); z-index: 999; animation: fadeIn .4s ease; }
+    #login-screen.hidden { display: none; }
+    .login-card { width: 380px; background: var(--navy2); border: 1px solid var(--border); border-radius: 10px; padding: 48px 40px 40px; text-align: center; box-shadow: 0 32px 80px rgba(0,0,0,.6); }
+    .login-logo .brand-c { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 300; color: var(--gold); letter-spacing: 6px; }
+    .login-logo .brand-sub { font-size: 9px; letter-spacing: 5px; color: var(--muted); text-transform: uppercase; margin-top: -4px; }
+    .login-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin: 20px 0; opacity: .5; }
+    .login-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: var(--cream); margin-bottom: 4px; }
+    .login-sub { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 28px; }
+    .login-card label { display: block; text-align: left; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .login-card input { width: 100%; padding: 11px 14px; background: var(--navy3); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; transition: border .2s; margin-bottom: 20px; }
+    .login-card input:focus { border-color: var(--gold); }
+    .btn-primary { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: var(--navy); font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; border: none; border-radius: var(--radius); cursor: pointer; transition: opacity .2s; }
+    .btn-primary:hover { opacity: .9; }
+    .login-hint { margin-top: 16px; font-size: 11px; color: var(--muted); }
+    .login-hint code { background: var(--panel); padding: 2px 6px; border-radius: 3px; font-family: 'DM Mono', monospace; color: var(--gold); }
+    .login-error { color: var(--red); font-size: 12px; margin-top: 12px; display: none; }
+
+    /* SHELL */
+    #app { display: none; height: 100vh; flex-direction: column; }
+    #app.visible { display: flex; }
+
+    /* TOPBAR */
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 28px; height: 58px; background: var(--navy2); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .topbar-brand { display: flex; align-items: center; gap: 14px; }
+    .brand-mark { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: var(--gold); letter-spacing: 3px; }
+    .brand-sep { width: 1px; height: 28px; background: var(--border); }
+    .brand-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
+    .topbar-right { display: flex; align-items: center; gap: 20px; }
+    .status-pill { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--green); letter-spacing: 1px; text-transform: uppercase; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+    .topbar-user { font-size: 11px; color: var(--muted); }
+    .btn-logout { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 5px 12px; border-radius: var(--radius); cursor: pointer; transition: border-color .2s, color .2s; }
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+    /* LAYOUT */
+    .layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* SIDEBAR */
+    .sidebar { width: 224px; flex-shrink: 0; background: var(--navy2); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 0; }
+    .sidebar-section { padding: 0 16px; margin-bottom: 6px; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; cursor: pointer; font-size: 13px; color: var(--muted); border-left: 3px solid transparent; transition: color .15s, background .15s, border-color .15s; }
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,.03); }
+    .nav-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(201,168,76,.06); }
+    .nav-item svg { flex-shrink: 0; opacity: .7; }
+    .nav-item.active svg { opacity: 1; }
+    .sidebar-footer { margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--border); font-size: 10px; color: var(--muted); line-height: 1.8; }
+
+    /* MAIN */
+    .main { flex: 1; overflow-y: auto; padding: 28px 32px; background: var(--navy); }
+
+    /* PAGE HEADER */
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 300; color: var(--cream); letter-spacing: 1px; }
+    .page-header p { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: .5px; }
+    .page-divider { height: 1px; background: linear-gradient(90deg, var(--gold) 0%, transparent 60%); margin: 16px 0 24px; opacity: .4; }
+
+    /* PANELS */
+    .panel { background: var(--navy2); border: 1px solid var(--border); border-radius: 8px; padding: 24px; }
+    .panel-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+
+    /* STATS */
+    .stats-row { display: grid; gap: 16px; margin-bottom: 24px; }
+    .stats-row.cols4 { grid-template-columns: repeat(4, 1fr); }
+    .stats-row.cols3 { grid-template-columns: repeat(3, 1fr); }
+    .stat-card { background: var(--navy2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; position: relative; overflow: hidden; }
+    .stat-card::before { content:''; position: absolute; top:0; left:0; right:0; height: 2px; }
+    .stat-card.green::before { background: var(--green); }
+    .stat-card.gold::before  { background: var(--gold); }
+    .stat-card.amber::before { background: var(--amber); }
+    .stat-card.blue::before  { background: var(--blue); }
+    .stat-card.red::before   { background: var(--red); }
+    .stat-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .stat-value { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300; color: var(--cream); line-height: 1; }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { border-bottom: 1px solid var(--border); }
+    th { text-align: left; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 10px 14px; font-weight: 400; }
+    tbody tr { border-bottom: 1px solid rgba(42,58,79,.5); transition: background .15s; cursor: pointer; }
+    tbody tr:hover { background: rgba(201,168,76,.04); }
+    tbody tr.no-hover:hover { background: none; cursor: default; }
+    td { padding: 12px 14px; font-size: 13px; color: var(--text); }
+    td.mono { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+    td.amt  { font-family: 'DM Mono', monospace; font-size: 13px; }
+    td.amt.credit { color: var(--green); }
+    td.amt.debit  { color: var(--red); }
+
+    /* BADGES */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+    .badge-green  { background: rgba(45,188,126,.15);  color: var(--green); border: 1px solid rgba(45,188,126,.3); }
+    .badge-amber  { background: rgba(224,160,48,.15);  color: var(--amber); border: 1px solid rgba(224,160,48,.3); }
+    .badge-red    { background: rgba(217,79,79,.15);   color: var(--red);   border: 1px solid rgba(217,79,79,.3); }
+    .badge-blue   { background: rgba(74,158,221,.15);  color: var(--blue);  border: 1px solid rgba(74,158,221,.3); }
+    .badge-muted  { background: rgba(122,143,166,.15); color: var(--muted); border: 1px solid rgba(122,143,166,.3); }
+    .badge-gold   { background: rgba(201,168,76,.15);  color: var(--gold);  border: 1px solid rgba(201,168,76,.3); }
+
+    /* FORMS */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.span2 { grid-column: span 2; }
+    .form-group.span3 { grid-column: span 3; }
+    .form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-group label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .form-group input, .form-group select, .form-group textarea { padding: 10px 13px; background: var(--navy3); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; outline: none; transition: border .2s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); }
+    .form-group select { appearance: none; cursor: pointer; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    option { background: var(--panel); }
+
+    .btn-row { display: flex; gap: 12px; margin-top: 24px; }
+    .btn-secondary { padding: 10px 24px; background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Outfit', sans-serif; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; border-radius: var(--radius); cursor: pointer; transition: border-color .2s, color .2s; }
+    .btn-secondary:hover { border-color: var(--text); color: var(--text); }
+    .btn-gold { padding: 10px 28px; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: var(--navy); font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; border: none; border-radius: var(--radius); cursor: pointer; transition: opacity .2s; }
+    .btn-gold:hover { opacity: .88; }
+    .btn-sm { padding: 5px 12px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; border-radius: var(--radius); cursor: pointer; border: 1px solid var(--border); background: none; color: var(--muted); transition: all .15s; }
+    .btn-sm:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-sm.danger:hover { border-color: var(--red); color: var(--red); }
+
+    /* SEARCH */
+    .search-wrap { display: flex; gap: 12px; margin-bottom: 20px; }
+    .search-input { flex: 1; padding: 10px 14px; background: var(--navy2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; outline: none; transition: border .2s; }
+    .search-input:focus { border-color: var(--gold); }
+
+    /* CLIENT DETAIL */
+    .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+    .detail-name { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: var(--cream); }
+    .detail-id { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+    .detail-field label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
+    .detail-field span { font-size: 13px; color: var(--text); }
+
+    /* DOCS */
+    .doc-list { display: flex; flex-direction: column; gap: 10px; }
+    .doc-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--navy3); border: 1px solid var(--border); border-radius: var(--radius); transition: border-color .15s; }
+    .doc-item:hover { border-color: var(--gold); }
+    .doc-left { display: flex; align-items: center; gap: 14px; }
+    .doc-icon { width: 36px; height: 36px; background: rgba(201,168,76,.12); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+    .doc-name { font-size: 13px; color: var(--text); font-weight: 500; }
+    .doc-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .btn-dl { padding: 6px 14px; background: none; border: 1px solid var(--border); color: var(--muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; border-radius: var(--radius); cursor: pointer; transition: all .2s; }
+    .btn-dl:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* FINANCE */
+    .fin-bar { height: 8px; border-radius: 4px; background: var(--navy3); overflow: hidden; margin-top: 8px; }
+    .fin-bar-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+    .fin-bar-fill.green { background: var(--green); }
+    .fin-bar-fill.red   { background: var(--red); }
+    .fin-bar-fill.gold  { background: var(--gold); }
+
+    .invoice-status-paid    { color: var(--green); }
+    .invoice-status-pending { color: var(--amber); }
+    .invoice-status-overdue { color: var(--red); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+    /* TIMELINE */
+    .timeline { display: flex; flex-direction: column; }
+    .tl-item { display: flex; gap: 16px; padding-bottom: 20px; position: relative; }
+    .tl-item:not(:last-child)::before { content:''; position: absolute; left: 14px; top: 28px; bottom: 0; width: 1px; background: var(--border); }
+    .tl-dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .tl-dot.green { background: rgba(45,188,126,.2); border: 1px solid var(--green); }
+    .tl-dot.amber { background: rgba(224,160,48,.2); border: 1px solid var(--amber); }
+    .tl-dot.blue  { background: rgba(74,158,221,.2); border: 1px solid var(--blue); }
+    .tl-dot.muted { background: rgba(122,143,166,.15); border: 1px solid var(--border); }
+    .tl-content .tl-text { font-size: 13px; color: var(--text); }
+    .tl-content .tl-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* NOTICE */
+    .notice { background: rgba(201,168,76,.08); border: 1px solid rgba(201,168,76,.25); border-radius: var(--radius); padding: 12px 16px; font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 20px; }
+    .notice strong { color: var(--gold); }
+
+    /* BACK BTN */
+    .btn-back { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; color: var(--muted); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; padding: 0; margin-bottom: 20px; transition: color .15s; }
+    .btn-back:hover { color: var(--gold); }
+
+    /* TOAST */
+    #toast { position: fixed; bottom: 28px; right: 28px; background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--green); color: var(--text); padding: 14px 20px; border-radius: var(--radius); font-size: 13px; transform: translateY(80px); opacity: 0; transition: all .3s; z-index: 1000; min-width: 260px; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    /* PAGES */
+    .page { display: none; }
+    .page.active { display: block; animation: fadeIn .25s ease; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 500; display: flex; align-items: center; justify-content: center; animation: fadeIn .2s ease; }
+    .modal-overlay.hidden { display: none; }
+    .modal { background: var(--navy2); border: 1px solid var(--border); border-radius: 10px; padding: 32px; width: 520px; max-height: 90vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,.6); }
+    .modal h2 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 300; color: var(--cream); margin-bottom: 4px; }
+    .modal .modal-sub { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 24px; }
+    .modal-close { float: right; background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; }
+    .modal-close:hover { color: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="brand-c">CAPE</div>
+      <div class="brand-sub">Paralegal Services</div>
+    </div>
+    <div class="login-divider"></div>
+    <div class="login-title">ParaBot Dashboard</div>
+    <div class="login-sub">Secure Operations Access</div>
+    <label>Access Code</label>
+    <input type="password" id="access-input" placeholder="Enter access code" />
+    <button class="btn-primary" onclick="doLogin()">Authenticate</button>
+    <div class="login-error" id="login-error">Invalid access code. Please try again.</div>
+    <div class="login-hint">Demo code: <code>CPS2026</code></div>
+  </div>
+</div>
+
+<!-- NEW INVOICE MODAL -->
+<div class="modal-overlay hidden" id="invoice-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('invoice-modal')">×</button>
+    <h2>New Invoice</h2>
+    <div class="modal-sub">Cape Paralegal Services · Billing</div>
+    <div class="form-grid cols3" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="form-group"><label>Invoice #</label><input type="text" id="inv-num" placeholder="INV-2026-0XX" /></div>
+      <div class="form-group"><label>Case ID</label>
+        <select id="inv-case">
+          <option value="">— Select case —</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Date</label><input type="text" id="inv-date" /></div>
+      <div class="form-group"><label>Service Description</label><input type="text" id="inv-desc" placeholder="e.g. Estate admin consultation" style="grid-column:span 2;" /></div>
+      <div class="form-group"><label>Amount (ZAR)</label><input type="text" id="inv-amount" placeholder="0.00" /></div>
+      <div class="form-group"><label>VAT (15%)</label><input type="text" id="inv-vat" placeholder="Auto" readonly style="opacity:.6;" /></div>
+      <div class="form-group"><label>Status</label>
+        <select id="inv-status">
+          <option>Pending</option><option>Paid</option><option>Overdue</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Due Date</label><input type="text" id="inv-due" /></div>
+    </div>
+    <div class="btn-row"><button class="btn-gold" onclick="saveInvoice()">Create Invoice</button><button class="btn-secondary" onclick="closeModal('invoice-modal')">Cancel</button></div>
+  </div>
+</div>
+
+<!-- NEW EXPENSE MODAL -->
+<div class="modal-overlay hidden" id="expense-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('expense-modal')">×</button>
+    <h2>Record Expense</h2>
+    <div class="modal-sub">Cape Paralegal Services · Expenditure</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Description</label><input type="text" id="exp-desc" placeholder="e.g. Filing fee – Deeds Office" /></div>
+      <div class="form-group"><label>Amount (ZAR)</label><input type="text" id="exp-amount" placeholder="0.00" /></div>
+      <div class="form-group"><label>Category</label>
+        <select id="exp-cat">
+          <option>Filing Fees</option><option>Travel</option><option>Courier</option><option>Printing</option><option>Software</option><option>Professional Services</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Linked Case (optional)</label>
+        <select id="exp-case"><option value="">— None —</option></select>
+      </div>
+      <div class="form-group"><label>Date</label><input type="text" id="exp-date" /></div>
+      <div class="form-group"><label>Paid By</label>
+        <select id="exp-by"><option>Felicia Antha</option><option>Practice Account</option><option>Petty Cash</option></select>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn-gold" onclick="saveExpense()">Record Expense</button><button class="btn-secondary" onclick="closeModal('expense-modal')">Cancel</button></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="brand-mark">CAPE</div>
+      <div class="brand-sep" style="width:1px;height:28px;background:var(--border);"></div>
+      <div class="brand-label">ParaBot · Legal Ops</div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill"><div class="status-dot"></div>System Online</div>
+      <div class="topbar-user" id="topbar-user"></div>
+      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sidebar-section" style="margin-bottom:12px;">Navigation</div>
+      <div class="nav-item active" onclick="navigate('dashboard')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="navigate('check-status')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Check Client Status
+      </div>
+      <div class="nav-item" onclick="navigate('new-client')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6m3-3h-6"/></svg>
+        New Client
+      </div>
+      <div class="nav-item" onclick="navigate('update-status')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Update Status
+      </div>
+      <div class="nav-item" onclick="navigate('documents')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Documents
+      </div>
+      <div class="sidebar-section" style="margin-top:20px;margin-bottom:8px;">Finance</div>
+      <div class="nav-item" onclick="navigate('finance')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Financial Overview
+      </div>
+      <div class="nav-item" onclick="navigate('invoices')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6m-6 4h4"/></svg>
+        Invoices
+      </div>
+      <div class="nav-item" onclick="navigate('expenses')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Expenses
+      </div>
+      <div class="sidebar-footer">Cape Paralegal Services<br>Pty Ltd · South Africa<br>info@cape-paralegal.co.za</div>
+    </div>
+
+    <div class="main">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header"><h1>Good day — Operations Overview</h1><p>Cape Paralegal Services · Case Management System · June 2026</p></div>
+        <div class="page-divider"></div>
+        <div class="stats-row cols4">
+          <div class="stat-card green"><div class="stat-label">Active Cases</div><div class="stat-value">24</div><div class="stat-sub">↑ 3 this week</div></div>
+          <div class="stat-card gold"><div class="stat-label">Pending Review</div><div class="stat-value">7</div><div class="stat-sub">Awaiting documentation</div></div>
+          <div class="stat-card amber"><div class="stat-label">Overdue Tasks</div><div class="stat-value">3</div><div class="stat-sub">Requires attention</div></div>
+          <div class="stat-card blue"><div class="stat-label">Closed This Month</div><div class="stat-value">11</div><div class="stat-sub">June 2026</div></div>
+        </div>
+        <div class="stats-row cols3" style="margin-bottom:24px;">
+          <div class="stat-card green"><div class="stat-label">Revenue (June)</div><div class="stat-value" style="font-size:28px;">R 42,800</div><div class="fin-bar"><div class="fin-bar-fill green" style="width:71%"></div></div><div class="stat-sub" style="margin-top:6px;">71% of monthly target</div></div>
+          <div class="stat-card amber"><div class="stat-label">Outstanding Invoices</div><div class="stat-value" style="font-size:28px;">R 18,500</div><div class="fin-bar"><div class="fin-bar-fill gold" style="width:43%"></div></div><div class="stat-sub" style="margin-top:6px;">4 invoices unpaid</div></div>
+          <div class="stat-card red"><div class="stat-label">Expenses (June)</div><div class="stat-value" style="font-size:28px;">R 9,240</div><div class="fin-bar"><div class="fin-bar-fill red" style="width:30%"></div></div><div class="stat-sub" style="margin-top:6px;">Net: R 33,560</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
+          <div class="panel">
+            <div class="panel-title">Recent Cases</div>
+            <table>
+              <thead><tr><th>Case ID</th><th>Client</th><th>Matter</th><th>Status</th><th>Updated</th></tr></thead>
+              <tbody>
+                <tr onclick="viewClientById('CPL-2026-041')"><td class="mono">CPL-2026-041</td><td>Nadia Fredericks</td><td>Estate Admin</td><td><span class="badge badge-amber">In Progress</span></td><td class="mono">06 Jun</td></tr>
+                <tr onclick="viewClientById('CPL-2026-039')"><td class="mono">CPL-2026-039</td><td>Thabo Mkhize</td><td>Debt Review</td><td><span class="badge badge-green">Active</span></td><td class="mono">05 Jun</td></tr>
+                <tr onclick="viewClientById('CPL-2026-037')"><td class="mono">CPL-2026-037</td><td>Lerato Dlamini</td><td>Section 45</td><td><span class="badge badge-blue">Pending Docs</span></td><td class="mono">04 Jun</td></tr>
+                <tr onclick="viewClientById('CPL-2026-033')"><td class="mono">CPL-2026-033</td><td>Pieter van der Berg</td><td>Notarial Bond</td><td><span class="badge badge-green">Active</span></td><td class="mono">03 Jun</td></tr>
+                <tr onclick="viewClientById('CPL-2026-029')"><td class="mono">CPL-2026-029</td><td>Zanele Mokoena</td><td>Labour Dispute</td><td><span class="badge badge-red">Overdue</span></td><td class="mono">28 May</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Recent Activity</div>
+            <div class="timeline">
+              <div class="tl-item"><div class="tl-dot green">✓</div><div class="tl-content"><div class="tl-text">Affidavit filed for CPL-2026-041</div><div class="tl-time">Today, 10:14</div></div></div>
+              <div class="tl-item"><div class="tl-dot amber">!</div><div class="tl-content"><div class="tl-text">Invoice INV-2026-038 overdue</div><div class="tl-time">Today, 08:30</div></div></div>
+              <div class="tl-item"><div class="tl-dot green">R</div><div class="tl-content"><div class="tl-text">Payment received: INV-2026-035 (R 4,200)</div><div class="tl-time">Yesterday, 14:52</div></div></div>
+              <div class="tl-item"><div class="tl-dot blue">+</div><div class="tl-content"><div class="tl-text">New client: Nadia Fredericks</div><div class="tl-time">Yesterday, 11:08</div></div></div>
+              <div class="tl-item"><div class="tl-dot muted">·</div><div class="tl-content"><div class="tl-text">Expense recorded: Filing fee R 320</div><div class="tl-time">03 Jun, 09:45</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHECK STATUS -->
+      <div class="page" id="page-check-status">
+        <div class="page-header"><h1>Check Client Status</h1><p>Search by case ID, name, or ID number</p></div>
+        <div class="page-divider"></div>
+        <div class="search-wrap"><input class="search-input" id="status-search" placeholder="Search: name, case ID, ID number…" onkeyup="filterClients()" /></div>
+        <div class="panel" id="status-results">
+          <div class="panel-title">All Clients</div>
+          <table><thead><tr><th>Case ID</th><th>Client Name</th><th>ID Number</th><th>Matter</th><th>Status</th><th>Paralegal</th><th></th></tr></thead>
+          <tbody id="status-table-body"></tbody></table>
+        </div>
+        <div id="client-detail" style="display:none;">
+          <button class="btn-back" onclick="closeDetail()">← Back to Results</button>
+          <div class="panel">
+            <div class="detail-header"><div><div class="detail-name" id="d-name"></div><div class="detail-id" id="d-id"></div></div><div id="d-badge"></div></div>
+            <div class="detail-grid">
+              <div class="detail-field"><label>ID Number</label><span id="d-idno"></span></div>
+              <div class="detail-field"><label>Phone</label><span id="d-phone"></span></div>
+              <div class="detail-field"><label>Email</label><span id="d-email"></span></div>
+              <div class="detail-field"><label>Matter Type</label><span id="d-matter"></span></div>
+              <div class="detail-field"><label>Paralegal</label><span id="d-para"></span></div>
+              <div class="detail-field"><label>Date Opened</label><span id="d-date"></span></div>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:16px;"><div class="panel-title">Case Notes</div><div id="d-notes" style="font-size:13px;color:var(--text);line-height:1.8;white-space:pre-wrap;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEW CLIENT -->
+      <div class="page" id="page-new-client">
+        <div class="page-header"><h1>Register New Client</h1><p>Complete all required fields to open a new matter</p></div>
+        <div class="page-divider"></div>
+        <div class="notice"><strong>Note:</strong> Cape Paralegal Services (Pty) Ltd provides paralegal support only. Nothing in this system constitutes legal advice.</div>
+        <div class="panel">
+          <div class="panel-title">Client Information</div>
+          <div class="form-grid">
+            <div class="form-group"><label>First Name *</label><input type="text" id="nc-first" placeholder="First name" /></div>
+            <div class="form-group"><label>Last Name *</label><input type="text" id="nc-last" placeholder="Last name" /></div>
+            <div class="form-group"><label>SA ID Number *</label><input type="text" id="nc-idno" placeholder="13-digit ID number" maxlength="13" /></div>
+            <div class="form-group"><label>Phone Number</label><input type="text" id="nc-phone" placeholder="+27 xx xxx xxxx" /></div>
+            <div class="form-group"><label>Email Address</label><input type="text" id="nc-email" placeholder="client@email.com" /></div>
+            <div class="form-group"><label>Date of Birth</label><input type="text" id="nc-dob" placeholder="YYYY-MM-DD" /></div>
+            <div class="form-group span2"><label>Physical Address</label><input type="text" id="nc-addr" placeholder="Street, City, Province, Postal Code" /></div>
+          </div>
+          <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+            <div class="panel-title">Matter Details</div>
+            <div class="form-grid">
+              <div class="form-group"><label>Matter Type *</label>
+                <select id="nc-matter"><option value="">— Select matter type —</option><option>Estate Administration</option><option>Section 45 Distribution</option><option>Debt Review</option><option>Notarial Bond</option><option>Labour Dispute</option><option>Affidavit / Commissioning</option><option>Contract Review</option><option>Other</option></select>
+              </div>
+              <div class="form-group"><label>Assigned Paralegal</label><select id="nc-para"><option>Felicia Antha</option><option>Unassigned</option></select></div>
+              <div class="form-group"><label>Consultation Fee (ZAR)</label><input type="text" id="nc-fee" placeholder="0.00" /></div>
+              <div class="form-group"><label>Payment Status</label><select id="nc-pay-status"><option>Pending</option><option>Paid</option><option>Waived</option></select></div>
+              <div class="form-group span2"><label>Initial Case Notes</label><textarea id="nc-notes" placeholder="Describe the client's matter briefly…"></textarea></div>
+            </div>
+          </div>
+          <div class="btn-row"><button class="btn-gold" onclick="saveNewClient()">Register Client</button><button class="btn-secondary" onclick="clearNewClient()">Clear Form</button></div>
+        </div>
+      </div>
+
+      <!-- UPDATE STATUS -->
+      <div class="page" id="page-update-status">
+        <div class="page-header"><h1>Update Case Status</h1><p>Modify status and add progress notes to an existing matter</p></div>
+        <div class="page-divider"></div>
+        <div class="panel">
+          <div class="panel-title">Select Case</div>
+          <div class="form-group" style="margin-bottom:16px;max-width:400px;"><label>Case ID</label><select id="us-case-select" onchange="loadCaseForUpdate()"><option value="">— Select a case —</option></select></div>
+          <div id="us-form" style="display:none;">
+            <div class="form-grid">
+              <div class="form-group"><label>Client</label><input type="text" id="us-client" readonly style="opacity:.6;" /></div>
+              <div class="form-group"><label>Matter Type</label><input type="text" id="us-matter" readonly style="opacity:.6;" /></div>
+              <div class="form-group"><label>Current Status</label><input type="text" id="us-current" readonly style="opacity:.6;" /></div>
+              <div class="form-group"><label>New Status *</label>
+                <select id="us-new-status"><option value="">— Choose new status —</option><option>Active</option><option>In Progress</option><option>Pending Docs</option><option>Pending Signature</option><option>Under Review</option><option>Overdue</option><option>Closed</option><option>On Hold</option></select>
+              </div>
+              <div class="form-group span2"><label>Progress Note</label><textarea id="us-note" placeholder="Describe what has changed or what action was taken…"></textarea></div>
+            </div>
+            <div class="btn-row"><button class="btn-gold" onclick="applyStatusUpdate()">Save Update</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOCUMENTS -->
+      <div class="page" id="page-documents">
+        <div class="page-header"><h1>Document Repository</h1><p>Access and retrieve filed documents by case or document type</p></div>
+        <div class="page-divider"></div>
+        <div class="search-wrap"><input class="search-input" id="doc-search" placeholder="Filter by name, case ID, or type…" onkeyup="filterDocs()" /></div>
+        <div class="panel"><div class="panel-title">Filed Documents</div><div class="doc-list" id="doc-list"></div></div>
+      </div>
+
+      <!-- FINANCIAL OVERVIEW -->
+      <div class="page" id="page-finance">
+        <div class="page-header"><h1>Financial Overview</h1><p>Revenue, collections, and practice health · June 2026</p></div>
+        <div class="page-divider"></div>
+        <div class="stats-row cols4">
+          <div class="stat-card green"><div class="stat-label">Total Revenue YTD</div><div class="stat-value" style="font-size:26px;" id="fin-ytd-rev">—</div><div class="stat-sub">Jan–Jun 2026</div></div>
+          <div class="stat-card blue"><div class="stat-label">Collected YTD</div><div class="stat-value" style="font-size:26px;" id="fin-ytd-col">—</div><div class="stat-sub">Paid invoices only</div></div>
+          <div class="stat-card amber"><div class="stat-label">Outstanding</div><div class="stat-value" style="font-size:26px;" id="fin-outstanding">—</div><div class="stat-sub">Pending + overdue</div></div>
+          <div class="stat-card red"><div class="stat-label">Total Expenses YTD</div><div class="stat-value" style="font-size:26px;" id="fin-ytd-exp">—</div><div class="stat-sub">All categories</div></div>
+        </div>
+        <div class="two-col" style="margin-bottom:20px;">
+          <div class="panel">
+            <div class="panel-title">Monthly Revenue vs Expenses</div>
+            <canvas id="rev-chart" height="180"></canvas>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Invoice Status Breakdown</div>
+            <canvas id="inv-chart" height="180"></canvas>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-title">Top Matters by Revenue</div>
+            <table><thead><tr><th>Matter Type</th><th>Invoiced</th><th>Collected</th></tr></thead>
+            <tbody>
+              <tr class="no-hover"><td>Estate Administration</td><td class="amt credit">R 18,400</td><td class="amt credit">R 14,200</td></tr>
+              <tr class="no-hover"><td>Debt Review</td><td class="amt credit">R 12,600</td><td class="amt credit">R 12,600</td></tr>
+              <tr class="no-hover"><td>Notarial Bond</td><td class="amt credit">R 8,200</td><td class="amt credit">R 6,000</td></tr>
+              <tr class="no-hover"><td>Labour Dispute</td><td class="amt credit">R 5,800</td><td class="amt credit">R 4,200</td></tr>
+              <tr class="no-hover"><td>Affidavit / Commissioning</td><td class="amt credit">R 2,400</td><td class="amt credit">R 2,400</td></tr>
+            </tbody></table>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Expense Breakdown</div>
+            <table><thead><tr><th>Category</th><th>Amount</th><th>% of Total</th></tr></thead>
+            <tbody id="exp-breakdown-table"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVOICES -->
+      <div class="page" id="page-invoices">
+        <div class="page-header"><h1>Invoices</h1><p>Billing records for all client matters</p></div>
+        <div class="page-divider"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="search-wrap" style="margin:0;flex:1;margin-right:16px;"><input class="search-input" id="inv-search" placeholder="Search invoices…" onkeyup="filterInvoices()" /></div>
+          <button class="btn-gold" onclick="openModal('invoice-modal')">+ New Invoice</button>
+        </div>
+        <div class="panel"><div class="panel-title">Invoice Register</div>
+          <table><thead><tr><th>Invoice #</th><th>Case ID</th><th>Client</th><th>Description</th><th>Amount</th><th>VAT</th><th>Total</th><th>Due Date</th><th>Status</th><th></th></tr></thead>
+          <tbody id="inv-table-body"></tbody></table>
+        </div>
+      </div>
+
+      <!-- EXPENSES -->
+      <div class="page" id="page-expenses">
+        <div class="page-header"><h1>Expenses</h1><p>Practice expenditure tracking</p></div>
+        <div class="page-divider"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="search-wrap" style="margin:0;flex:1;margin-right:16px;"><input class="search-input" id="exp-search" placeholder="Search expenses…" onkeyup="filterExpenses()" /></div>
+          <button class="btn-gold" onclick="openModal('expense-modal')">+ Record Expense</button>
+        </div>
+        <div class="panel"><div class="panel-title">Expense Ledger</div>
+          <table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Linked Case</th><th>Amount</th><th>Paid By</th><th></th></tr></thead>
+          <tbody id="exp-table-body"></tbody></table>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /layout -->
+</div><!-- /app -->
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ── MOCK DATA ──────────────────────────────────────────────────────────
+const CLIENTS = [
+  { id:'CPL-2026-041', first:'Nadia',  last:'Fredericks',    idno:'8807150134082', phone:'+27 82 441 3392', email:'nadia.f@gmail.com',         dob:'1988-07-15', addr:'14 Kloof St, Gardens, Cape Town, 8001',     matter:'Estate Administration',   status:'In Progress',  para:'Felicia Antha', opened:'2026-05-22', notes:'Deceased: Johan Fredericks (father). Wills Act S11 formalities confirmed. Awaiting Master\'s appointment letter. Affidavit filed 06 Jun 2026.' },
+  { id:'CPL-2026-039', first:'Thabo',  last:'Mkhize',        idno:'9203125678091', phone:'+27 76 882 1005', email:'t.mkhize@webmail.co.za',     dob:'1992-03-12', addr:'32 Buitenkant St, Cape Town, 8001',          matter:'Debt Review',             status:'Active',       para:'Felicia Antha', opened:'2026-05-10', notes:'Application submitted to NCR. Creditor notifications sent. Payment plan under negotiation.' },
+  { id:'CPL-2026-037', first:'Lerato', last:'Dlamini',        idno:'9512280093071', phone:'+27 61 330 2781', email:'lerato.dlamini@outlook.com', dob:'1995-12-28', addr:'8 De Waal Dr, Tamboerskloof, 8001',           matter:'Section 45 Distribution', status:'Pending Docs', para:'Felicia Antha', opened:'2026-04-30', notes:'Section 45(1) Consent drafted. Awaiting signed consent from all beneficiaries. Reminder sent 04 Jun.' },
+  { id:'CPL-2026-033', first:'Pieter', last:'van der Berg',   idno:'8001015100087', phone:'+27 83 200 4411', email:'pvdberg@hotmail.com',        dob:'1980-01-01', addr:'Lot 4, Stellenbosch, 7600',                   matter:'Notarial Bond',           status:'Active',       para:'Felicia Antha', opened:'2026-04-14', notes:'Movable property bond registration in progress. Title deed confirmed.' },
+  { id:'CPL-2026-029', first:'Zanele', last:'Mokoena',        idno:'9309175432011', phone:'+27 71 992 0034', email:'zanele.m@telkomsa.net',      dob:'1993-09-17', addr:'99 Voortrekker Rd, Bellville, 7530',          matter:'Labour Dispute',          status:'Overdue',      para:'Unassigned',    opened:'2026-03-28', notes:'Unfair dismissal matter. CCMA referral form (LRA 7.11) pending submission. Deadline passed 28 May 2026.' },
+  { id:'CPL-2026-025', first:'Amina',  last:'Davids',         idno:'0106240019084', phone:'+27 84 531 7762', email:'amina.davids@gmail.com',     dob:'2001-06-24', addr:'55 Imam Haron Rd, Claremont, 7708',          matter:'Affidavit / Commissioning',status:'Closed',      para:'Felicia Antha', opened:'2026-03-05', notes:'Affidavit commissioned and certified. Matter closed 20 Mar 2026.' },
+];
+
+let INVOICES = [
+  { num:'INV-2026-041', caseId:'CPL-2026-041', client:'Nadia Fredericks',    desc:'Estate administration — consultation & document prep', amount:6800,  vat:1020, status:'Pending', due:'2026-06-20', date:'2026-05-22' },
+  { num:'INV-2026-039', caseId:'CPL-2026-039', client:'Thabo Mkhize',        desc:'Debt review — NCR application & creditor engagement',  amount:4200,  vat:630,  status:'Paid',    due:'2026-06-05', date:'2026-05-10' },
+  { num:'INV-2026-038', caseId:'CPL-2026-037', client:'Lerato Dlamini',      desc:'Section 45(1) distribution — consent documentation',   amount:3800,  vat:570,  status:'Overdue', due:'2026-05-28', date:'2026-04-30' },
+  { num:'INV-2026-033', caseId:'CPL-2026-033', client:'Pieter van der Berg', desc:'Notarial bond — drafting and registration liaison',    amount:5200,  vat:780,  status:'Pending', due:'2026-06-25', date:'2026-04-14' },
+  { num:'INV-2026-029', caseId:'CPL-2026-029', client:'Zanele Mokoena',      desc:'Labour dispute — CCMA referral preparation',          amount:2800,  vat:420,  status:'Overdue', due:'2026-05-15', date:'2026-03-28' },
+  { num:'INV-2026-025', caseId:'CPL-2026-025', client:'Amina Davids',        desc:'Affidavit commissioning — full service',              amount:1200,  vat:180,  status:'Paid',    due:'2026-03-20', date:'2026-03-05' },
+];
+
+let EXPENSES = [
+  { date:'2026-06-06', desc:'Deeds Office filing fee — Fredericks estate', cat:'Filing Fees',           caseId:'CPL-2026-041', amount:320,  by:'Felicia Antha' },
+  { date:'2026-06-04', desc:'Courier — documents to Stellenbosch',         cat:'Courier',               caseId:'CPL-2026-033', amount:185,  by:'Felicia Antha' },
+  { date:'2026-06-03', desc:'CCMA offices — travel reimbursement',         cat:'Travel',                caseId:'CPL-2026-029', amount:640,  by:'Felicia Antha' },
+  { date:'2026-05-30', desc:'Document printing & binding (x12 sets)',      cat:'Printing',              caseId:'',             amount:890,  by:'Petty Cash' },
+  { date:'2026-05-28', desc:'Master of High Court filing fee',             cat:'Filing Fees',           caseId:'CPL-2026-041', amount:1200, by:'Practice Account' },
+  { date:'2026-05-20', desc:'CaseAware subscription — June',               cat:'Software',              caseId:'',             amount:1850, by:'Practice Account' },
+  { date:'2026-05-15', desc:'Process server — Mkhize creditor notice',     cat:'Professional Services', caseId:'CPL-2026-039', amount:750,  by:'Practice Account' },
+  { date:'2026-05-10', desc:'Stationery & office supplies',                cat:'Printing',              caseId:'',             amount:410,  by:'Petty Cash' },
+  { date:'2026-05-05', desc:'Fuel — client site visit Stellenbosch',       cat:'Travel',               caseId:'CPL-2026-033', amount:520,  by:'Felicia Antha' },
+  { date:'2026-04-30', desc:'NCR registration fee — Mkhize',              cat:'Filing Fees',           caseId:'CPL-2026-039', amount:475,  by:'Practice Account' },
+  { date:'2026-04-20', desc:'Professional Indemnity insurance Q2',        cat:'Professional Services',  caseId:'',             amount:2000, by:'Practice Account' },
+];
+
+const DOCUMENTS = [
+  { name:'Affidavit – Fredericks Estate',      caseId:'CPL-2026-041', type:'Affidavit',      date:'2026-06-06', size:'148 KB', ext:'pdf' },
+  { name:'Invoice INV-2026-041',               caseId:'CPL-2026-041', type:'Invoice',         date:'2026-05-22', size:'42 KB',  ext:'pdf' },
+  { name:'Consent to Section 45(1) – Dlamini', caseId:'CPL-2026-037', type:'Legal Document',  date:'2026-05-30', size:'96 KB',  ext:'docx' },
+  { name:'NCR Application – Mkhize',           caseId:'CPL-2026-039', type:'Application Form',date:'2026-05-12', size:'210 KB', ext:'pdf' },
+  { name:'Notarial Bond Draft – van der Berg', caseId:'CPL-2026-033', type:'Draft Bond',      date:'2026-04-20', size:'182 KB', ext:'docx' },
+  { name:'CCMA Referral LRA 7.11 – Mokoena',  caseId:'CPL-2026-029', type:'CCMA Form',       date:'2026-04-01', size:'74 KB',  ext:'pdf' },
+  { name:'Commissioned Affidavit – Davids',    caseId:'CPL-2026-025', type:'Affidavit',       date:'2026-03-20', size:'88 KB',  ext:'pdf' },
+  { name:'Engagement Letter – Fredericks',     caseId:'CPL-2026-041', type:'Correspondence',  date:'2026-05-22', size:'55 KB',  ext:'docx' },
+];
+
+// ── AUTH ──────────────────────────────────────────────────────────────
+function doLogin() {
+  if (document.getElementById('access-input').value.trim() === 'CPS2026') {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('topbar-user').textContent = 'Felicia Antha · Paralegal';
+    initApp();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('access-input').value = '';
+  }
+}
+document.getElementById('access-input').addEventListener('keyup', e => { if(e.key==='Enter') doLogin(); });
+function doLogout() {
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('access-input').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+// ── NAVIGATE ──────────────────────────────────────────────────────────
+const NAV_IDS = ['dashboard','check-status','new-client','update-status','documents','finance','invoices','expenses'];
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item')[NAV_IDS.indexOf(page)]?.classList.add('active');
+  if (page === 'check-status') { document.getElementById('client-detail').style.display='none'; document.getElementById('status-results').style.display='block'; }
+  if (page === 'finance') setTimeout(renderCharts, 80);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+function initApp() {
+  renderStatusTable(CLIENTS);
+  populateCaseSelect();
+  renderDocList(DOCUMENTS);
+  renderInvoiceTable(INVOICES);
+  renderExpenseTable(EXPENSES);
+  renderExpenseBreakdown();
+  updateFinStats();
+  populateModalCaseSelects();
+  // set today's date in modals
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('inv-date').value = today;
+  document.getElementById('exp-date').value = today;
+  document.getElementById('inv-vat').value = '';
+  document.getElementById('inv-amount').addEventListener('input', e => {
+    const v = parseFloat(e.target.value)||0;
+    document.getElementById('inv-vat').value = (v*0.15).toFixed(2);
+  });
+}
+
+// ── STATUS BADGE ──────────────────────────────────────────────────────
+function statusBadge(s) {
+  const map = { 'Active':'badge-green','In Progress':'badge-amber','Pending Docs':'badge-blue','Overdue':'badge-red','Closed':'badge-muted','On Hold':'badge-muted','Pending Signature':'badge-blue','Under Review':'badge-amber','Paid':'badge-green','Pending':'badge-amber' };
+  return `<span class="badge ${map[s]||'badge-muted'}">${s}</span>`;
+}
+
+// ── CLIENTS ───────────────────────────────────────────────────────────
+function renderStatusTable(data) {
+  document.getElementById('status-table-body').innerHTML = data.map(c =>
+    `<tr onclick="viewClientById('${c.id}')">
+      <td class="mono">${c.id}</td><td>${c.first} ${c.last}</td><td class="mono">${c.idno}</td>
+      <td>${c.matter}</td><td>${statusBadge(c.status)}</td><td>${c.para}</td>
+      <td><button class="btn-sm" onclick="event.stopPropagation();viewClientById('${c.id}')">View</button></td>
+    </tr>`).join('');
+}
+function filterClients() {
+  const q = document.getElementById('status-search').value.toLowerCase();
+  renderStatusTable(CLIENTS.filter(c => `${c.first} ${c.last} ${c.id} ${c.idno} ${c.matter}`.toLowerCase().includes(q)));
+}
+function viewClientById(id) {
+  const c = CLIENTS.find(x => x.id === id);
+  if (!c) return;
+  navigate('check-status');
+  document.getElementById('status-results').style.display = 'none';
+  document.getElementById('client-detail').style.display = 'block';
+  document.getElementById('d-name').textContent = `${c.first} ${c.last}`;
+  document.getElementById('d-id').textContent = `Case: ${c.id} · Opened ${c.opened}`;
+  document.getElementById('d-badge').innerHTML = statusBadge(c.status);
+  document.getElementById('d-idno').textContent = c.idno;
+  document.getElementById('d-phone').textContent = c.phone;
+  document.getElementById('d-email').textContent = c.email;
+  document.getElementById('d-matter').textContent = c.matter;
+  document.getElementById('d-para').textContent = c.para;
+  document.getElementById('d-date').textContent = c.opened;
+  document.getElementById('d-notes').textContent = c.notes;
+}
+function closeDetail() {
+  document.getElementById('client-detail').style.display = 'none';
+  document.getElementById('status-results').style.display = 'block';
+}
+
+// ── NEW CLIENT ────────────────────────────────────────────────────────
+function saveNewClient() {
+  const first = document.getElementById('nc-first').value.trim();
+  const last  = document.getElementById('nc-last').value.trim();
+  const idno  = document.getElementById('nc-idno').value.trim();
+  const matter= document.getElementById('nc-matter').value;
+  if (!first||!last||!idno||!matter) { showToast('Please complete all required fields.','amber'); return; }
+  const newId = 'CPL-2026-0'+(42+CLIENTS.length);
+  const fee = parseFloat(document.getElementById('nc-fee').value)||0;
+  CLIENTS.unshift({ id:newId, first, last, idno, phone:document.getElementById('nc-phone').value||'—', email:document.getElementById('nc-email').value||'—', dob:document.getElementById('nc-dob').value||'—', addr:document.getElementById('nc-addr').value||'—', matter, status:'Active', para:document.getElementById('nc-para').value, opened:new Date().toISOString().split('T')[0], notes:document.getElementById('nc-notes').value||'No initial notes.' });
+  if (fee > 0) {
+    INVOICES.unshift({ num:'INV-2026-0'+(42+INVOICES.length), caseId:newId, client:`${first} ${last}`, desc:`${matter} — initial consultation`, amount:fee, vat:parseFloat((fee*0.15).toFixed(2)), status:document.getElementById('nc-pay-status').value==='Paid'?'Paid':'Pending', due: new Date(Date.now()+30*86400000).toISOString().split('T')[0], date:new Date().toISOString().split('T')[0] });
+    renderInvoiceTable(INVOICES);
+    updateFinStats();
+  }
+  populateCaseSelect(); populateModalCaseSelects();
+  renderStatusTable(CLIENTS);
+  clearNewClient();
+  showToast(`Client ${first} ${last} registered as ${newId}`);
+}
+function clearNewClient() {
+  ['nc-first','nc-last','nc-idno','nc-phone','nc-email','nc-dob','nc-addr','nc-notes','nc-fee'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nc-matter').value='';
+}
+
+// ── UPDATE STATUS ─────────────────────────────────────────────────────
+function populateCaseSelect() {
+  const sel = document.getElementById('us-case-select');
+  sel.innerHTML = '<option value="">— Select a case —</option>'+CLIENTS.filter(c=>c.status!=='Closed').map(c=>`<option value="${c.id}">${c.id} · ${c.first} ${c.last}</option>`).join('');
+}
+function loadCaseForUpdate() {
+  const id = document.getElementById('us-case-select').value;
+  const form = document.getElementById('us-form');
+  if (!id) { form.style.display='none'; return; }
+  const c = CLIENTS.find(x=>x.id===id);
+  document.getElementById('us-client').value = `${c.first} ${c.last}`;
+  document.getElementById('us-matter').value = c.matter;
+  document.getElementById('us-current').value = c.status;
+  document.getElementById('us-new-status').value = '';
+  document.getElementById('us-note').value = '';
+  form.style.display = 'block';
+}
+function applyStatusUpdate() {
+  const id = document.getElementById('us-case-select').value;
+  const newStatus = document.getElementById('us-new-status').value;
+  const note = document.getElementById('us-note').value.trim();
+  if (!newStatus) { showToast('Please select a new status.','amber'); return; }
+  const c = CLIENTS.find(x=>x.id===id);
+  c.status = newStatus;
+  if (note) c.notes = `[${new Date().toLocaleDateString('en-ZA')}] ${note}\n\n${c.notes}`;
+  renderStatusTable(CLIENTS);
+  document.getElementById('us-form').style.display='none';
+  document.getElementById('us-case-select').value='';
+  showToast(`${id} updated to "${newStatus}"`);
+}
+
+// ── DOCUMENTS ─────────────────────────────────────────────────────────
+function renderDocList(docs) {
+  const icons = { pdf:'📄', docx:'📝' };
+  document.getElementById('doc-list').innerHTML = docs.map(d=>`
+    <div class="doc-item">
+      <div class="doc-left"><div class="doc-icon">${icons[d.ext]||'📁'}</div>
+        <div><div class="doc-name">${d.name}</div><div class="doc-meta">${d.caseId} · ${d.type} · ${d.date} · ${d.size}</div></div>
+      </div>
+      <button class="btn-dl" onclick="fakeDownload('${d.name}','${d.ext}')">↓ Download</button>
+    </div>`).join('');
+}
+function filterDocs() {
+  const q = document.getElementById('doc-search').value.toLowerCase();
+  renderDocList(DOCUMENTS.filter(d=>`${d.name} ${d.caseId} ${d.type}`.toLowerCase().includes(q)));
+}
+function fakeDownload(name,ext) { showToast(`Downloading: ${name}.${ext}`); }
+
+// ── INVOICES ──────────────────────────────────────────────────────────
+function fmt(n) { return 'R '+n.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function renderInvoiceTable(data) {
+  document.getElementById('inv-table-body').innerHTML = data.map(inv=>`
+    <tr class="no-hover">
+      <td class="mono">${inv.num}</td>
+      <td class="mono">${inv.caseId}</td>
+      <td>${inv.client}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${inv.desc}</td>
+      <td class="amt credit">${fmt(inv.amount)}</td>
+      <td class="amt" style="color:var(--muted);">${fmt(inv.vat)}</td>
+      <td class="amt credit" style="font-weight:600;">${fmt(inv.amount+inv.vat)}</td>
+      <td class="mono">${inv.due}</td>
+      <td>${statusBadge(inv.status)}</td>
+      <td><button class="btn-sm" onclick="markInvoicePaid('${inv.num}')">Mark Paid</button></td>
+    </tr>`).join('');
+}
+function filterInvoices() {
+  const q = document.getElementById('inv-search').value.toLowerCase();
+  renderInvoiceTable(INVOICES.filter(i=>`${i.num} ${i.caseId} ${i.client} ${i.desc}`.toLowerCase().includes(q)));
+}
+function markInvoicePaid(num) {
+  const inv = INVOICES.find(i=>i.num===num);
+  if (inv) { inv.status='Paid'; renderInvoiceTable(INVOICES); updateFinStats(); renderCharts(); showToast(`${num} marked as Paid`); }
+}
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function populateModalCaseSelects() {
+  const opts = '<option value="">— None —</option>'+CLIENTS.map(c=>`<option value="${c.id}">${c.id} · ${c.first} ${c.last}</option>`).join('');
+  document.getElementById('inv-case').innerHTML = opts;
+  document.getElementById('exp-case').innerHTML = opts;
+}
+function saveInvoice() {
+  const num = document.getElementById('inv-num').value.trim();
+  const caseId = document.getElementById('inv-case').value;
+  const desc = document.getElementById('inv-desc').value.trim();
+  const amount = parseFloat(document.getElementById('inv-amount').value)||0;
+  const status = document.getElementById('inv-status').value;
+  const due = document.getElementById('inv-due').value;
+  const date = document.getElementById('inv-date').value;
+  if (!num||!desc||!amount) { showToast('Fill in invoice number, description and amount.','amber'); return; }
+  const c = CLIENTS.find(x=>x.id===caseId);
+  INVOICES.unshift({ num, caseId:caseId||'—', client:c?`${c.first} ${c.last}`:'—', desc, amount, vat:parseFloat((amount*0.15).toFixed(2)), status, due, date });
+  renderInvoiceTable(INVOICES); updateFinStats(); renderExpenseBreakdown();
+  closeModal('invoice-modal'); showToast(`Invoice ${num} created`);
+  document.getElementById('inv-num').value=''; document.getElementById('inv-desc').value=''; document.getElementById('inv-amount').value=''; document.getElementById('inv-vat').value=''; document.getElementById('inv-due').value='';
+}
+
+// ── EXPENSES ──────────────────────────────────────────────────────────
+function renderExpenseTable(data) {
+  document.getElementById('exp-table-body').innerHTML = data.map((e,i)=>`
+    <tr class="no-hover">
+      <td class="mono">${e.date}</td>
+      <td>${e.desc}</td>
+      <td><span class="badge badge-muted">${e.cat}</span></td>
+      <td class="mono">${e.caseId||'—'}</td>
+      <td class="amt debit">${fmt(e.amount)}</td>
+      <td>${e.by}</td>
+      <td><button class="btn-sm danger" onclick="deleteExpense(${i})">Remove</button></td>
+    </tr>`).join('');
+}
+function filterExpenses() {
+  const q = document.getElementById('exp-search').value.toLowerCase();
+  renderExpenseTable(EXPENSES.filter(e=>`${e.desc} ${e.cat} ${e.caseId}`.toLowerCase().includes(q)));
+}
+function deleteExpense(i) { EXPENSES.splice(i,1); renderExpenseTable(EXPENSES); updateFinStats(); renderExpenseBreakdown(); showToast('Expense removed'); }
+function saveExpense() {
+  const desc   = document.getElementById('exp-desc').value.trim();
+  const amount = parseFloat(document.getElementById('exp-amount').value)||0;
+  const cat    = document.getElementById('exp-cat').value;
+  const caseId = document.getElementById('exp-case').value;
+  const date   = document.getElementById('exp-date').value;
+  const by     = document.getElementById('exp-by').value;
+  if (!desc||!amount) { showToast('Fill in description and amount.','amber'); return; }
+  EXPENSES.unshift({ date, desc, cat, caseId, amount, by });
+  renderExpenseTable(EXPENSES); updateFinStats(); renderExpenseBreakdown();
+  closeModal('expense-modal'); showToast(`Expense recorded: ${fmt(amount)}`);
+  document.getElementById('exp-desc').value=''; document.getElementById('exp-amount').value='';
+}
+
+// ── FINANCE STATS ─────────────────────────────────────────────────────
+function updateFinStats() {
+  const totalRev = INVOICES.reduce((s,i)=>s+i.amount,0);
+  const collected = INVOICES.filter(i=>i.status==='Paid').reduce((s,i)=>s+i.amount+i.vat,0);
+  const outstanding = INVOICES.filter(i=>i.status!=='Paid').reduce((s,i)=>s+i.amount+i.vat,0);
+  const totalExp = EXPENSES.reduce((s,e)=>s+e.amount,0);
+  document.getElementById('fin-ytd-rev').textContent = fmt(totalRev);
+  document.getElementById('fin-ytd-col').textContent = fmt(collected);
+  document.getElementById('fin-outstanding').textContent = fmt(outstanding);
+  document.getElementById('fin-ytd-exp').textContent = fmt(totalExp);
+}
+function renderExpenseBreakdown() {
+  const cats = {};
+  EXPENSES.forEach(e=>{ cats[e.cat]=(cats[e.cat]||0)+e.amount; });
+  const total = EXPENSES.reduce((s,e)=>s+e.amount,0);
+  const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('exp-breakdown-table').innerHTML = sorted.map(([cat,amt])=>
+    `<tr class="no-hover"><td>${cat}</td><td class="amt debit">${fmt(amt)}</td><td class="mono" style="color:var(--muted);">${total?((amt/total)*100).toFixed(1)+'%':'0%'}</td></tr>`
+  ).join('');
+}
+
+// ── CHARTS ───────────────────────────────────────────────────────────
+let revChart, invChart;
+const CHART_DEFAULTS = {
+  color: '#d8e4f0',
+  plugins: { legend: { labels: { color:'#7a8fa6', font:{ family:'Outfit', size:11 }, boxWidth:12 } } },
+  scales: {
+    x: { ticks:{ color:'#7a8fa6', font:{size:11} }, grid:{ color:'rgba(42,58,79,.5)' } },
+    y: { ticks:{ color:'#7a8fa6', font:{size:11} }, grid:{ color:'rgba(42,58,79,.5)' } }
+  }
+};
+function renderCharts() {
+  // Revenue vs Expenses bar chart
+  const rc = document.getElementById('rev-chart');
+  if (revChart) revChart.destroy();
+  revChart = new Chart(rc, {
+    type:'bar',
+    data:{
+      labels:['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets:[
+        { label:'Revenue (ZAR)', data:[28400,31200,24800,38600,41200,42800], backgroundColor:'rgba(45,188,126,.7)', borderRadius:4 },
+        { label:'Expenses (ZAR)', data:[7200,8100,6400,9800,10200,9240], backgroundColor:'rgba(217,79,79,.5)', borderRadius:4 }
+      ]
+    },
+    options:{ ...CHART_DEFAULTS, responsive:true, plugins:{ ...CHART_DEFAULTS.plugins } }
+  });
+
+  // Invoice status doughnut
+  const paid = INVOICES.filter(i=>i.status==='Paid').length;
+  const pending = INVOICES.filter(i=>i.status==='Pending').length;
+  const overdue = INVOICES.filter(i=>i.status==='Overdue').length;
+  const ic = document.getElementById('inv-chart');
+  if (invChart) invChart.destroy();
+  invChart = new Chart(ic, {
+    type:'doughnut',
+    data:{
+      labels:['Paid','Pending','Overdue'],
+      datasets:[{ data:[paid,pending,overdue], backgroundColor:['rgba(45,188,126,.8)','rgba(224,160,48,.8)','rgba(217,79,79,.8)'], borderColor:['#0d1117'], borderWidth:2 }]
+    },
+    options:{ responsive:true, cutout:'65%', plugins:{ legend:{ position:'right', labels:{ color:'#7a8fa6', font:{family:'Outfit',size:11}, boxWidth:12 } } } }
+  });
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+function showToast(msg, type='green') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = type==='amber' ? 'var(--amber)' : 'var(--green)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
+</script>
+</body>
+</html>
