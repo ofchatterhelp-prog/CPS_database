@@ -555,44 +555,78 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-// ── DATA ──────────────────────────────────────────────────────────────
-const CLIENTS = [
-  {id:'CPL-2026-041',first:'Nadia',last:'Fredericks',idno:'8807150134082',phone:'+27 82 441 3392',email:'nadia.f@gmail.com',dob:'1988-07-15',addr:'14 Kloof St, Gardens, Cape Town',matter:'Estate Administration',status:'In Progress',para:'Felicia Antha',opened:'2026-05-22',notes:'Deceased: Johan Fredericks (father). Wills Act S11 formalities confirmed. Awaiting Master\'s appointment letter. Affidavit filed 06 Jun 2026.'},
-  {id:'CPL-2026-039',first:'Thabo',last:'Mkhize',idno:'9203125678091',phone:'+27 76 882 1005',email:'t.mkhize@webmail.co.za',dob:'1992-03-12',addr:'32 Buitenkant St, Cape Town',matter:'Debt Review',status:'Active',para:'Felicia Antha',opened:'2026-05-10',notes:'Application submitted to NCR. Creditor notifications sent. Payment plan under negotiation.'},
-  {id:'CPL-2026-037',first:'Lerato',last:'Dlamini',idno:'9512280093071',phone:'+27 61 330 2781',email:'lerato.dlamini@outlook.com',dob:'1995-12-28',addr:'8 De Waal Dr, Tamboerskloof',matter:'Section 45 Distribution',status:'Pending Docs',para:'Felicia Antha',opened:'2026-04-30',notes:'Section 45(1) Consent drafted. Awaiting signed consent from all beneficiaries. Reminder sent 04 Jun.'},
-  {id:'CPL-2026-033',first:'Pieter',last:'van der Berg',idno:'8001015100087',phone:'+27 83 200 4411',email:'pvdberg@hotmail.com',dob:'1980-01-01',addr:'Lot 4, Stellenbosch',matter:'Notarial Bond',status:'Active',para:'Felicia Antha',opened:'2026-04-14',notes:'Movable property bond registration in progress. Title deed confirmed.'},
-  {id:'CPL-2026-029',first:'Zanele',last:'Mokoena',idno:'9309175432011',phone:'+27 71 992 0034',email:'zanele.m@telkomsa.net',dob:'1993-09-17',addr:'99 Voortrekker Rd, Bellville',matter:'Labour Dispute',status:'Overdue',para:'Unassigned',opened:'2026-03-28',notes:'Unfair dismissal matter. CCMA referral form (LRA 7.11) pending. DEADLINE PASSED 28 May 2026.'},
-  {id:'CPL-2026-025',first:'Amina',last:'Davids',idno:'0106240019084',phone:'+27 84 531 7762',email:'amina.davids@gmail.com',dob:'2001-06-24',addr:'55 Imam Haron Rd, Claremont',matter:'Affidavit / Commissioning',status:'Closed',para:'Felicia Antha',opened:'2026-03-05',notes:'Affidavit commissioned and certified. Matter closed 20 Mar 2026.'},
-];
-let INVOICES = [
-  {num:'INV-2026-041',caseId:'CPL-2026-041',client:'Nadia Fredericks',desc:'Estate administration — consultation & document prep',amount:6800,vat:1020,status:'Pending',due:'2026-06-20',date:'2026-05-22'},
-  {num:'INV-2026-039',caseId:'CPL-2026-039',client:'Thabo Mkhize',desc:'Debt review — NCR application & creditor engagement',amount:4200,vat:630,status:'Paid',due:'2026-06-05',date:'2026-05-10'},
-  {num:'INV-2026-038',caseId:'CPL-2026-037',client:'Lerato Dlamini',desc:'Section 45(1) distribution — consent documentation',amount:3800,vat:570,status:'Overdue',due:'2026-05-28',date:'2026-04-30'},
-  {num:'INV-2026-033',caseId:'CPL-2026-033',client:'Pieter van der Berg',desc:'Notarial bond — drafting and registration liaison',amount:5200,vat:780,status:'Pending',due:'2026-06-25',date:'2026-04-14'},
-  {num:'INV-2026-029',caseId:'CPL-2026-029',client:'Zanele Mokoena',desc:'Labour dispute — CCMA referral preparation',amount:2800,vat:420,status:'Overdue',due:'2026-05-15',date:'2026-03-28'},
-  {num:'INV-2026-025',caseId:'CPL-2026-025',client:'Amina Davids',desc:'Affidavit commissioning — full service',amount:1200,vat:180,status:'Paid',due:'2026-03-20',date:'2026-03-05'},
-];
-let EXPENSES = [
-  {date:'2026-06-06',desc:'Deeds Office filing fee — Fredericks estate',cat:'Filing Fees',caseId:'CPL-2026-041',amount:320,by:'Felicia Antha'},
-  {date:'2026-06-04',desc:'Courier — documents to Stellenbosch',cat:'Courier',caseId:'CPL-2026-033',amount:185,by:'Felicia Antha'},
-  {date:'2026-06-03',desc:'CCMA offices — travel reimbursement',cat:'Travel',caseId:'CPL-2026-029',amount:640,by:'Felicia Antha'},
-  {date:'2026-05-30',desc:'Document printing & binding (x12 sets)',cat:'Printing',caseId:'',amount:890,by:'Petty Cash'},
-  {date:'2026-05-28',desc:'Master of High Court filing fee',cat:'Filing Fees',caseId:'CPL-2026-041',amount:1200,by:'Practice Account'},
-  {date:'2026-05-20',desc:'CaseAware subscription — June',cat:'Software',caseId:'',amount:1850,by:'Practice Account'},
-  {date:'2026-05-15',desc:'Process server — Mkhize creditor notice',cat:'Professional Services',caseId:'CPL-2026-039',amount:750,by:'Practice Account'},
-  {date:'2026-05-05',desc:'Fuel — client site visit Stellenbosch',cat:'Travel',caseId:'CPL-2026-033',amount:520,by:'Felicia Antha'},
-  {date:'2026-04-30',desc:'NCR registration fee — Mkhize',cat:'Filing Fees',caseId:'CPL-2026-039',amount:475,by:'Practice Account'},
-  {date:'2026-04-20',desc:'Professional Indemnity insurance Q2',cat:'Professional Services',caseId:'',amount:2000,by:'Practice Account'},
-];
-const DOCUMENTS = [
-  {name:'Affidavit – Fredericks Estate',caseId:'CPL-2026-041',type:'Affidavit',date:'2026-06-06',size:'148 KB',ext:'pdf'},
-  {name:'Invoice INV-2026-041',caseId:'CPL-2026-041',type:'Invoice',date:'2026-05-22',size:'42 KB',ext:'pdf'},
-  {name:'Consent Section 45(1) – Dlamini',caseId:'CPL-2026-037',type:'Legal Document',date:'2026-05-30',size:'96 KB',ext:'docx'},
-  {name:'NCR Application – Mkhize',caseId:'CPL-2026-039',type:'Application Form',date:'2026-05-12',size:'210 KB',ext:'pdf'},
-  {name:'Notarial Bond Draft – van der Berg',caseId:'CPL-2026-033',type:'Draft Bond',date:'2026-04-20',size:'182 KB',ext:'docx'},
-  {name:'CCMA Referral LRA 7.11 – Mokoena',caseId:'CPL-2026-029',type:'CCMA Form',date:'2026-04-01',size:'74 KB',ext:'pdf'},
-  {name:'Commissioned Affidavit – Davids',caseId:'CPL-2026-025',type:'Affidavit',date:'2026-03-20',size:'88 KB',ext:'pdf'},
-];
+// ── API CONFIG ────────────────────────────────────────────────────────
+const API = 'http://167.233.83.27:3000';
+
+// ── LIVE DATA STORE ───────────────────────────────────────────────────
+let CLIENTS = [];
+let INVOICES = [];
+let EXPENSES = [];
+const DOCUMENTS = [];
+
+// ── API HELPERS ───────────────────────────────────────────────────────
+async function apiGet(path) {
+  try {
+    const res = await fetch(API + path);
+    return await res.json();
+  } catch(e) {
+    showToast('Connection error — check server', 'amber');
+    return [];
+  }
+}
+async function apiPost(path, data) {
+  try {
+    const res = await fetch(API + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  } catch(e) {
+    showToast('Save error — check server', 'amber');
+    return null;
+  }
+}
+async function apiPatch(path, data) {
+  try {
+    const res = await fetch(API + path, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  } catch(e) {
+    showToast('Update error — check server', 'amber');
+    return null;
+  }
+}
+
+// ── MAP DB ROWS TO APP FORMAT ─────────────────────────────────────────
+function mapClient(r) {
+  return {
+    id: r.case_id, first: r.first_name, last: r.last_name,
+    idno: r.id_number, phone: r.phone||'—', email: r.email||'—',
+    addr: r.address||'—', matter: r.matter_type, status: r.status,
+    para: r.paralegal, opened: r.date_opened?.split('T')[0]||'—',
+    notes: r.notes||''
+  };
+}
+function mapInvoice(r) {
+  return {
+    num: r.invoice_num, caseId: r.case_id, client: r.client_name,
+    desc: r.description, amount: parseFloat(r.amount),
+    vat: parseFloat(r.vat), status: r.status,
+    due: r.due_date?.split('T')[0]||'—',
+    date: r.date_issued?.split('T')[0]||'—'
+  };
+}
+function mapExpense(r) {
+  return {
+    date: r.expense_date?.split('T')[0]||'—', desc: r.description,
+    cat: r.category, caseId: r.case_id||'',
+    amount: parseFloat(r.amount), by: r.paid_by
+  };
+}
 
 // ── AUTH ──────────────────────────────────────────────────────────────
 function doLogin(){
@@ -642,7 +676,16 @@ function toggleMore(){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────
-function initApp(){
+async function initApp(){
+  showToast('Loading data from server…', 'amber');
+  const [clients, invoices, expenses] = await Promise.all([
+    apiGet('/clients'),
+    apiGet('/invoices'),
+    apiGet('/expenses')
+  ]);
+  CLIENTS  = clients.map(mapClient);
+  INVOICES = invoices.map(mapInvoice);
+  EXPENSES = expenses.map(mapExpense);
   renderDashCases();
   renderClientCards(CLIENTS);
   populateCaseSelect();
@@ -659,6 +702,7 @@ function initApp(){
     const v=parseFloat(e.target.value)||0;
     document.getElementById('inv-vat').value=(v*0.15).toFixed(2);
   });
+  showToast('Connected to live database ✓');
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────
@@ -713,55 +757,64 @@ function closeDetail(){
 }
 
 // ── NEW CLIENT ────────────────────────────────────────────────────────
-function saveNewClient(){
-  const first=document.getElementById('nc-first').value.trim();
-  const last=document.getElementById('nc-last').value.trim();
-  const idno=document.getElementById('nc-idno').value.trim();
-  const matter=document.getElementById('nc-matter').value;
-  if(!first||!last||!idno||!matter){showToast('Please complete all required fields.','amber');return;}
-  const newId='CPL-2026-0'+(42+CLIENTS.length);
-  const fee=parseFloat(document.getElementById('nc-fee').value)||0;
-  CLIENTS.unshift({id:newId,first,last,idno,phone:document.getElementById('nc-phone').value||'—',email:document.getElementById('nc-email').value||'—',dob:document.getElementById('nc-dob').value||'—',addr:document.getElementById('nc-addr').value||'—',matter,status:'Active',para:document.getElementById('nc-para').value,opened:new Date().toISOString().split('T')[0],notes:document.getElementById('nc-notes').value||'No initial notes.'});
+async function saveNewClient(){
+  const first=document.getElementById("nc-first").value.trim();
+  const last=document.getElementById("nc-last").value.trim();
+  const idno=document.getElementById("nc-idno").value.trim();
+  const matter=document.getElementById("nc-matter").value;
+  if(!first||!last||!idno||!matter){showToast("Please complete all required fields.","amber");return;}
+  const newId="CPL-"+new Date().getFullYear()+"-0"+(100+CLIENTS.length);
+  const fee=parseFloat(document.getElementById("nc-fee").value)||0;
+  const clientData={case_id:newId,first_name:first,last_name:last,id_number:idno,phone:document.getElementById("nc-phone").value||"",email:document.getElementById("nc-email").value||"",address:document.getElementById("nc-addr").value||"",matter_type:matter,status:"Active",paralegal:document.getElementById("nc-para").value,date_opened:new Date().toISOString().split("T")[0],notes:document.getElementById("nc-notes").value||"No initial notes."};
+  const saved=await apiPost("/clients",clientData);
+  if(!saved){return;}
+  CLIENTS.unshift(mapClient({...clientData,...saved}));
   if(fee>0){
-    INVOICES.unshift({num:'INV-2026-0'+(42+INVOICES.length),caseId:newId,client:`${first} ${last}`,desc:`${matter} — initial consultation`,amount:fee,vat:parseFloat((fee*0.15).toFixed(2)),status:document.getElementById('nc-pay-status').value==='Paid'?'Paid':'Pending',due:new Date(Date.now()+30*86400000).toISOString().split('T')[0],date:new Date().toISOString().split('T')[0]});
+    const invNum="INV-"+new Date().getFullYear()+"-0"+(100+INVOICES.length);
+    const invData={invoice_num:invNum,case_id:newId,client_name:`${first} ${last}`,description:`${matter} — initial consultation`,amount:fee,vat:parseFloat((fee*0.15).toFixed(2)),status:document.getElementById("nc-pay-status").value==="Paid"?"Paid":"Pending",date_issued:new Date().toISOString().split("T")[0],due_date:new Date(Date.now()+30*86400000).toISOString().split("T")[0]};
+    const savedInv=await apiPost("/invoices",invData);
+    if(savedInv)INVOICES.unshift(mapInvoice({...invData,...savedInv}));
     renderInvoiceCards(INVOICES);updateFinStats();
   }
   populateCaseSelect();populateModalCaseSelects();renderClientCards(CLIENTS);renderDashCases();
   clearNewClient();showToast(`${first} ${last} registered as ${newId}`);
 }
 function clearNewClient(){
-  ['nc-first','nc-last','nc-idno','nc-phone','nc-email','nc-dob','nc-addr','nc-notes','nc-fee'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('nc-matter').value='';
+  ["nc-first","nc-last","nc-idno","nc-phone","nc-email","nc-dob","nc-addr","nc-notes","nc-fee"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("nc-matter").value="";
 }
 
-// ── UPDATE STATUS ─────────────────────────────────────────────────────
+// UPDATE STATUS
 function populateCaseSelect(){
-  const sel=document.getElementById('us-case-select');
-  sel.innerHTML='<option value="">— Select a case —</option>'+CLIENTS.filter(c=>c.status!=='Closed').map(c=>`<option value="${c.id}">${c.id} · ${c.first} ${c.last}</option>`).join('');
+  const sel=document.getElementById("us-case-select");
+  sel.innerHTML="<option value="">— Select a case —</option>"+CLIENTS.filter(c=>c.status!=="Closed").map(c=>`<option value="${c.id}">${c.id} · ${c.first} ${c.last}</option>`).join("");
 }
 function loadCaseForUpdate(){
-  const id=document.getElementById('us-case-select').value;
-  const form=document.getElementById('us-form');
-  if(!id){form.style.display='none';return;}
+  const id=document.getElementById("us-case-select").value;
+  const form=document.getElementById("us-form");
+  if(!id){form.style.display="none";return;}
   const c=CLIENTS.find(x=>x.id===id);
-  document.getElementById('us-client').value=`${c.first} ${c.last}`;
-  document.getElementById('us-matter').value=c.matter;
-  document.getElementById('us-current').value=c.status;
-  document.getElementById('us-new-status').value='';
-  document.getElementById('us-note').value='';
-  form.style.display='block';
+  document.getElementById("us-client").value=`${c.first} ${c.last}`;
+  document.getElementById("us-matter").value=c.matter;
+  document.getElementById("us-current").value=c.status;
+  document.getElementById("us-new-status").value="";
+  document.getElementById("us-note").value="";
+  form.style.display="block";
 }
-function applyStatusUpdate(){
-  const id=document.getElementById('us-case-select').value;
-  const newStatus=document.getElementById('us-new-status').value;
-  const note=document.getElementById('us-note').value.trim();
-  if(!newStatus){showToast('Please select a new status.','amber');return;}
+async function applyStatusUpdate(){
+  const id=document.getElementById("us-case-select").value;
+  const newStatus=document.getElementById("us-new-status").value;
+  const note=document.getElementById("us-note").value.trim();
+  if(!newStatus){showToast("Please select a new status.","amber");return;}
   const c=CLIENTS.find(x=>x.id===id);
-  c.status=newStatus;
-  if(note)c.notes=`[${new Date().toLocaleDateString('en-ZA')}] ${note}\n\n${c.notes}`;
+  const newNotes=note?`[${new Date().toLocaleDateString("en-ZA")}] ${note}
+
+${c.notes}`:c.notes;
+  await apiPatch("/clients/"+id,{status:newStatus,notes:newNotes});
+  c.status=newStatus;c.notes=newNotes;
   renderClientCards(CLIENTS);renderDashCases();
-  document.getElementById('us-form').style.display='none';
-  document.getElementById('us-case-select').value='';
+  document.getElementById("us-form").style.display="none";
+  document.getElementById("us-case-select").value="";
   showToast(`${id} updated to "${newStatus}"`);
 }
 
@@ -790,7 +843,7 @@ function renderInvoiceCards(data){
       </div>
       <div class="client-card-matter" style="margin-bottom:6px;">${inv.desc}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--green);">${fmt(inv.amount+inv.vat)} <span style="font-size:10px;color:var(--muted);">incl. VAT</span></div>
+        <div style="font-family:monospace;font-size:13px;color:var(--green);">${fmt(inv.amount+inv.vat)} <span style="font-size:10px;color:var(--muted);">incl. VAT</span></div>
         <div style="display:flex;gap:8px;align-items:center;">
           <span style="font-size:10px;color:var(--muted);">Due ${inv.due}</span>
           ${inv.status!=='Paid'?`<button class="btn-sm" onclick="markInvoicePaid('${inv.num}')">Mark Paid</button>`:''}
@@ -813,48 +866,52 @@ function populateModalCaseSelects(){
   document.getElementById('inv-case').innerHTML=opts;
   document.getElementById('exp-case').innerHTML=opts;
 }
-function saveInvoice(){
-  const num=document.getElementById('inv-num').value.trim();
-  const desc=document.getElementById('inv-desc').value.trim();
-  const amount=parseFloat(document.getElementById('inv-amount').value)||0;
-  if(!num||!desc||!amount){showToast('Fill in number, description and amount.','amber');return;}
-  const caseId=document.getElementById('inv-case').value;
+async function saveInvoice(){
+  const num=document.getElementById("inv-num").value.trim();
+  const desc=document.getElementById("inv-desc").value.trim();
+  const amount=parseFloat(document.getElementById("inv-amount").value)||0;
+  if(!num||!desc||!amount){showToast("Fill in number, description and amount.","amber");return;}
+  const caseId=document.getElementById("inv-case").value;
   const c=CLIENTS.find(x=>x.id===caseId);
-  INVOICES.unshift({num,caseId:caseId||'—',client:c?`${c.first} ${c.last}`:'—',desc,amount,vat:parseFloat((amount*0.15).toFixed(2)),status:document.getElementById('inv-status').value,due:document.getElementById('inv-due').value,date:document.getElementById('inv-date').value});
+  const invData={invoice_num:num,case_id:caseId||"",client_name:c?`${c.first} ${c.last}`:"—",description:desc,amount,vat:parseFloat((amount*0.15).toFixed(2)),status:document.getElementById("inv-status").value,date_issued:document.getElementById("inv-date").value,due_date:document.getElementById("inv-due").value};
+  const saved=await apiPost("/invoices",invData);
+  if(!saved){return;}
+  INVOICES.unshift(mapInvoice({...invData,...saved}));
   renderInvoiceCards(INVOICES);updateFinStats();
-  closeModal('invoice-modal');showToast(`Invoice ${num} created`);
-  ['inv-num','inv-desc','inv-amount','inv-vat','inv-due'].forEach(id=>document.getElementById(id).value='');
+  closeModal("invoice-modal");showToast(`Invoice ${num} created`);
+  ["inv-num","inv-desc","inv-amount","inv-vat","inv-due"].forEach(id=>document.getElementById(id).value="");
 }
 
-// ── EXPENSES ──────────────────────────────────────────────────────────
+// EXPENSES
 function renderExpenseCards(data){
-  document.getElementById('exp-card-list').innerHTML=data.map((e,i)=>`
+  document.getElementById("exp-card-list").innerHTML=data.map((e,i)=>`
     <div class="client-card" style="cursor:default;">
       <div class="client-card-top">
-        <div><div class="client-card-name">${e.desc}</div><div class="client-card-id">${e.date} · ${e.caseId||'No case'}</div></div>
-        <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--red);">${fmt(e.amount)}</div>
+        <div><div class="client-card-name">${e.desc}</div><div class="client-card-id">${e.date} · ${e.caseId||"No case"}</div></div>
+        <div style="font-family:monospace;font-size:13px;color:var(--red);">${fmt(e.amount)}</div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
         <span class="badge badge-muted">${e.cat}</span>
-        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:11px;color:var(--muted);">${e.by}</span><button class="btn-sm danger" onclick="deleteExpense(${i})">Remove</button></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:11px;color:var(--muted);">${e.by}</span></div>
       </div>
-    </div>`).join('');
+    </div>`).join("");
 }
 function filterExpenses(){
-  const q=document.getElementById('exp-search').value.toLowerCase();
+  const q=document.getElementById("exp-search").value.toLowerCase();
   renderExpenseCards(EXPENSES.filter(e=>`${e.desc} ${e.cat} ${e.caseId}`.toLowerCase().includes(q)));
 }
-function deleteExpense(i){EXPENSES.splice(i,1);renderExpenseCards(EXPENSES);updateFinStats();renderExpenseBreakdown();showToast('Expense removed');}
-function saveExpense(){
-  const desc=document.getElementById('exp-desc').value.trim();
-  const amount=parseFloat(document.getElementById('exp-amount').value)||0;
-  if(!desc||!amount){showToast('Fill in description and amount.','amber');return;}
-  EXPENSES.unshift({date:document.getElementById('exp-date').value,desc,cat:document.getElementById('exp-cat').value,caseId:document.getElementById('exp-case').value,amount,by:document.getElementById('exp-by').value});
+async function saveExpense(){
+  const desc=document.getElementById("exp-desc").value.trim();
+  const amount=parseFloat(document.getElementById("exp-amount").value)||0;
+  if(!desc||!amount){showToast("Fill in description and amount.","amber");return;}
+  const expData={description:desc,category:document.getElementById("exp-cat").value,case_id:document.getElementById("exp-case").value,amount,paid_by:document.getElementById("exp-by").value,expense_date:document.getElementById("exp-date").value};
+  const saved=await apiPost("/expenses",expData);
+  if(!saved){return;}
+  EXPENSES.unshift(mapExpense({...expData,...saved}));
   renderExpenseCards(EXPENSES);updateFinStats();renderExpenseBreakdown();
-  closeModal('expense-modal');showToast(`Expense recorded: ${fmt(amount)}`);
-  document.getElementById('exp-desc').value='';document.getElementById('exp-amount').value='';
+  closeModal("expense-modal");showToast(`Expense recorded: ${fmt(amount)}`);
+  document.getElementById("exp-desc").value="";document.getElementById("exp-amount").value="";
 }
-
 // ── FINANCE ───────────────────────────────────────────────────────────
 function updateFinStats(){
   const totalRev=INVOICES.reduce((s,i)=>s+i.amount,0);
