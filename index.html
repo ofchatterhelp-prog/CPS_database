@@ -787,7 +787,8 @@ function clearNewClient(){
 // UPDATE STATUS
 function populateCaseSelect(){
   const sel=document.getElementById("us-case-select");
-  sel.innerHTML="<option value="">— Select a case —</option>"+CLIENTS.filter(c=>c.status!=="Closed").map(c=>`<option value="${c.id}">${c.id} · ${c.first} ${c.last}</option>`).join("");
+  const opts=CLIENTS.filter(c=>c.status!=="Closed").map(c=>`<option value="${c.id}">${c.id} - ${c.first} ${c.last}</option>`).join("");
+  sel.innerHTML=`<option value="">— Select a case —</option>${opts}`;
 }
 function loadCaseForUpdate(){
   const id=document.getElementById("us-case-select").value;
